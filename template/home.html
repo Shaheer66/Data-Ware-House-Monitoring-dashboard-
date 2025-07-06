@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DWH Monitoring Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+</head>
+
+<body>
+
+    <nav>
+        <div class="navbar">
+            
+            <a href="#" class="logo">DWH Monitoring Dashboard</a>
+    
+            <div class="nav-buttons">
+                <!-- Search input for file selection -->
+                <input type="text" id="fileSearchInput" placeholder="Search files..." class="search-box">
+    
+                <!-- Custom File Selection Container with Checkboxes -->
+                <div id="fileSelectionContainer" class="file-selection-container">
+                    {% for filename in data.keys() %}
+                    <div class="file-option">
+                        <input type="checkbox" id="file-{{ loop.index }}" class="file-checkbox" value="{{ filename }}">
+                        <label for="file-{{ loop.index }}">{{ filename }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+    
+                <!-- Generate Charts and Logout buttons -->
+                <button class="generate-charts-btn" onclick="generateCharts()">Generate Charts</button>
+                <button class="logout-btn" onclick="logoutAll()">Logout</button>
+            </div>
+        </div>
+    </nav>
+    
+    
+    <main>
+        <!-- Section for Charts -->
+        <section class="charts-container">
+            <div class="chart">
+                <canvas id="pieChart"></canvas>
+            </div>
+            <div class="chart">
+                <canvas id="barChart"></canvas>
+            </div>
+        </section>
+        
+        <!-- Table for Listing Files -->
+        <section class="file-details">
+            <input type="text" id="tableSearchInput" placeholder="Search table..." class="search-box">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Serial No.</th>
+                        <th>Filename</th>
+                        <th>Start Time</th>
+                        <th>End Time</th>
+                        <th>Result</th>
+                        <th>Status</th>
+                        <th>Duration (Days:Hours:Minutes:Seconds)</th>
+                    </tr>
+                </thead>
+                <tbody id="file-table-body">
+                    <!-- Populated by JavaScript -->
+                </tbody>
+            </table>
+            
+            <!-- Pagination Controls -->
+            <div class="pagination-controls">
+                <button id="prevPage" onclick="prevPage()" disabled>Previous</button>
+                <span id="pageInfo">Page 1 of 1</span>
+                <button id="nextPage" onclick="nextPage()">Next</button>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const fileData = {{ data | tojson | safe }};
+        const pieCtx = document.getElementById('pieChart').getContext('2d');
+        const barCtx = document.getElementById('barChart').getContext('2d');
+        let pieChart;
+        let barChart;
+        const recordsPerPage = 20;
+        let currentPage = 1;
+        let totalPages = Math.ceil(Object.keys(fileData).length / recordsPerPage);
+    
+        // New Function to Filter File Checkboxes
+        document.getElementById('fileSearchInput').addEventListener('input', function() {
+            const query = this.value.toLowerCase();
+            const fileOptions = document.querySelectorAll('.file-option');
+    
+            fileOptions.forEach(option => {
+                const label = option.querySelector('label').textContent.toLowerCase();
+                if (label.includes(query)) {
+                    option.style.display = 'block';
+                } else {
+                    option.style.display = 'none';
+                }
+            });
+        });
+    
+        function generateCharts() {
+            const selectedFiles = Array.from(document.querySelectorAll('.file-checkbox:checked')).map(checkbox => checkbox.value);
+    
+            if (selectedFiles.length === 0) {
+                alert("Please select at least one file to generate charts.");
+                return;
+            }
+    
+            const pieChartLabels = selectedFiles;
+            const pieChartData = pieChartLabels.map(label => fileData[label].length);
+    
+            const barChartData = pieChartLabels.map(label => {
+                return fileData[label].reduce((acc, curr) => acc + ((new Date(curr.end_date) - new Date(curr.start_date)) / 3600000), 0);
+            });
+    
+            if (pieChart) {
+                pieChart.destroy();
+            }
+    
+            pieChart = new Chart(pieCtx, {
+                type: 'pie',
+                data: {
+                    labels: pieChartLabels,
+                    datasets: [{
+                        label: 'File Count',
+                        data: pieChartData,
+                        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#8E44AD', '#27AE60'],
+                    }]
+                },
+                options: {
+                    plugins: {
+                        datalabels: {
+                            color: '#fff',
+                            formatter: (value, context) => `${value} files`,
+                        }
+                    }
+                }
+            });
+    
+            if (barChart) {
+                barChart.destroy();
+            }
+    
+            barChart = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: pieChartLabels,
+                    datasets: [{
+                        label: 'Time Duration (Hours)',
+                        data: barChartData,
+                        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#8E44AD', '#27AE60'],
+                    }]
+                },
+                options: {
+                    plugins: {
+                        datalabels: {
+                            color: '#000',
+                            formatter: (value, context) => `${value.toFixed(2)} hrs`,
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Hours',
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Files',
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Search input for table filtering
+const tableSearchInput = document.getElementById('tableSearchInput');
+
+tableSearchInput.addEventListener('input', function () {
+    const query = tableSearchInput.value.toLowerCase();
+
+    const filteredData = {};
+    Object.keys(fileData).forEach(fileName => {
+        const filteredDetails = fileData[fileName].filter(detail => {
+            const combinedText = (fileName + ' ' + detail.result + ' ' + detail.status + ' ' + detail.start_date + ' ' + detail.end_date).toLowerCase();
+            return combinedText.includes(query);
+        });
+
+        if (filteredDetails.length > 0) {
+            filteredData[fileName] = filteredDetails;
+        }
+    });
+
+    totalPages = Math.ceil(Object.keys(filteredData).length / recordsPerPage);
+    currentPage = 1;  // Reset to the first page on search
+    paginateTable(filteredData); // Paginate filtered data
+    updatePaginationControls(); // Update controls after search action
+});
+
+
+        function logoutAll() {
+            localStorage.setItem('logout-event', 'logout' + Math.random());
+            window.location.href = "{{ url_for('login') }}";
+        }
+    
+        window.addEventListener('storage', function(event) {
+            if (event.key === 'logout-event') {
+                window.location.href = "{{ url_for('login') }}";
+            }
+        }, false);
+    
+        function formatDuration(startDate, endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            const duration = end - start;
+    
+            const seconds = Math.floor((duration / 1000) % 60);
+            const minutes = Math.floor((duration / (1000 * 60)) % 60);
+            const hours = Math.floor((duration / (1000 * 60 * 60)) % 24);
+            const days = Math.floor(duration / (1000 * 60 * 60 * 24));
+    
+            return `${days} Days: ${hours} Hours: ${minutes} Minutes: ${seconds} Seconds`;
+        }
+    
+        function paginateTable(data) {
+            const tableBody = document.getElementById('file-table-body');
+            tableBody.innerHTML = '';
+    
+            const sortedFileNames = Object.keys(data).sort((a, b) => {
+                const latestDetailA = data[a].sort((x, y) => new Date(y.start_date) - new Date(x.start_date))[0];
+                const latestDetailB = data[b].sort((x, y) => new Date(y.start_date) - new Date(x.start_date))[0];
+                return new Date(latestDetailB.start_date) - new Date(latestDetailA.start_date);
+            });
+    
+            const startIdx = (currentPage - 1) * recordsPerPage;
+            const endIdx = Math.min(startIdx + recordsPerPage, sortedFileNames.length);
+    
+            for (let i = startIdx; i < endIdx; i++) {
+                const fileName = sortedFileNames[i];
+                const latestDetail = data[fileName].sort((a, b) => new Date(b.start_date) - new Date(a.start_date))[0];
+                const formattedDuration = formatDuration(latestDetail.start_date, latestDetail.end_date);
+    
+                const row = `<tr>
+                                <td>${i + 1}</td>
+                                <td><a href="${url_for_file_details(fileName)}" target="_blank">${fileName}</a></td>
+                                <td>${latestDetail.start_date}</td>
+                                <td>${latestDetail.end_date}</td>
+                                <td>${latestDetail.result === 'Y' ? 'Proceeded' : 'Pending'}</td>
+                                <td>${latestDetail.status === 0 ? 'Completed' : 'Pending'}</td>
+                                <td>${formattedDuration}</td>
+                            </tr>`;
+                tableBody.insertAdjacentHTML('beforeend', row);
+            }
+    
+            updatePaginationControls(); // Ensure pagination controls are updated after rendering
+        }
+    
+        function updatePaginationControls() {
+            document.getElementById('pageInfo').innerText = `Page ${currentPage} of ${totalPages}`;
+            document.getElementById('prevPage').disabled = currentPage === 1;
+            document.getElementById('nextPage').disabled = currentPage === totalPages;
+        }
+    
+        function prevPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                paginateTable(fileData); // Call paginateTable with original data
+            }
+        }
+    
+        function nextPage() {
+            if (currentPage < totalPages) {
+                currentPage++;
+                paginateTable(fileData); // Call paginateTable with original data
+            }
+        }
+    
+        function url_for_file_details(filename) {
+            return `/file_details/${encodeURIComponent(filename)}`;
+        }
+    
+        const searchInput = document.getElementById('fileSearchInput');
+    
+        searchInput.addEventListener('input', function () {
+            const query = searchInput.value.toLowerCase();
+    
+            if (query === '') {
+                paginateTable(fileData); // Reset to original data when search is cleared
+            } else {
+                const filteredData = {};
+    
+                Object.keys(fileData).forEach(fileName => {
+                    const filteredDetails = fileData[fileName].filter(detail => {
+                        const combinedText = (fileName + ' ' + detail.result + ' ' + detail.status + ' ' + detail.start_date + ' ' + detail.end_date).toLowerCase();
+                        return combinedText.includes(query);
+                    });
+    
+                    if (filteredDetails.length > 0) {
+                        filteredData[fileName] = filteredDetails;
+                    }
+                });
+    
+                totalPages = Math.ceil(Object.keys(filteredData).length / recordsPerPage);
+                currentPage = 1;  // Reset to first page on search
+                paginateTable(filteredData); // Paginate filtered data
+            }
+    
+            updatePaginationControls(); // Update controls after search action
+        });
+    
+        // Initial Table Population
+        document.addEventListener('DOMContentLoaded', function() {
+            paginateTable(fileData);
+            updatePaginationControls();
+        });
+    
+    </script>
+    </body>
+
+</html>

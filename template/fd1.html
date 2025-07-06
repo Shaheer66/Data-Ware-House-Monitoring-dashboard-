@@ -1,0 +1,262 @@
+<!-- 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Details - {{ file_name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/file_detail.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header>
+        <h1>File Details: {{ file_name }}</h1>
+        <form method="get">
+            <label for="num_files">Number of Files to Show in Chart:</label>
+            <input type="number" id="num_files" name="num_files" value="{{ request.args.get('num_files', 5) }}">
+            <button type="submit">Update Chart</button>
+        </form>
+        <button class="logout-btn" onclick="logoutAll()">Logout</button>
+    </header>
+    <main>
+        <section class="file-summary">
+            <h2>File Summary</h2>
+            <ul>
+                <li><strong>Total Count:</strong> {{ total_count }}</li>
+            </ul>
+        </section>
+        <section class="file-details">
+            <h2>File Breakdown by Duration (Top {{ top_files|length }})</h2>
+            <div class="chart">
+                <canvas id="fileDetailChart"></canvas>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Serial No</th>
+                        <th>Start Time</th>
+                        <th>End Time</th>
+                        <th>Result</th>
+                        <th>Status</th>
+                        <th>Duration</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for detail in data %}
+                    <tr>
+                        <td>{{ loop.index }}</td> 
+                        <td>{{ detail.start_date }}</td>
+                        <td>{{ detail.end_date }}</td>
+                        <td>{{ detail.result_display }}</td>
+                        <td>{{ detail.status_display }}</td>
+                        <td>{{ detail.duration_formatted }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+        
+    </main>
+    <footer>
+        
+    </footer>
+    <script>
+        // Data for file details (only top N files for chart)
+        const topFilesData = {{ top_files | tojson | safe }};
+        
+        // Extract data for file detail chart
+        const fileDetailLabels = topFilesData.map(detail => `File ${detail.start_date}`);
+        const fileDetailDurations = topFilesData.map(detail => detail.duration_seconds / 3600); // Duration in hours
+
+        // File detail chart configuration
+        const fileDetailCtx = document.getElementById('fileDetailChart').getContext('2d');
+        const fileDetailChart = new Chart(fileDetailCtx, {
+            type: 'bar',
+            data: {
+                labels: fileDetailLabels,
+                datasets: [
+                    {
+                        label: 'Duration (Hours)',
+                        data: fileDetailDurations,
+                        backgroundColor: '#36A2EB',
+                    }
+                ]
+            }
+        });
+
+        function logoutAll() {
+            // Broadcast a logout event to all tabs/windows
+            localStorage.setItem('logout-event', 'login' + Math.random());
+
+            // Perform the actual logout
+            window.location.href = "{{ url_for('login') }}";
+        }
+
+        // Listen for the logout event in other tabs/windows
+        window.addEventListener('storage', function(event) {
+            if (event.key === 'logout-event') {
+                window.location.href = "{{ url_for('login') }}";
+            }
+        }, false);
+    </script>
+</body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Details - {{ file_name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/file_detail.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header>
+        <h1>File Details: {{ file_name }}</h1>
+        <button class="logout-btn" onclick="logoutAll()">Logout</button>
+        <form method="get">
+            <label for="num_files">Number of Files to Show in Chart:</label>
+            <input type="number" id="num_files" name="num_files" value="{{ request.args.get('num_files', 5) }}">
+            <button type="submit">Update Chart</button>
+        </form>
+    </header>
+    <main>
+        <section class="file-summary">
+            <h2>File Summary</h2>
+            <ul>
+                <li><strong>Total Count:</strong> {{ total_count }}</li>
+                <li><button id="viewTrendBtn">View Trend</button></li>
+            </ul>
+        </section>
+        <section class="file-details">
+            <h2>File Breakdown by Duration (Top {{ top_files|length }})</h2>
+            <div class="chart">
+                <canvas id="fileDetailChart"></canvas>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Serial</th>
+                        <th>Start Time</th>
+                        <th>End Time</th>
+                        <th>Result</th>
+                        <th>Status</th>
+                        <th>Duration</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for detail in data %}
+                    <tr>
+                        <td>{{ loop.index }}</td> 
+                        <td>{{ detail.start_date }}</td>
+                        <td>{{ detail.end_date }}</td>
+                        <td>{{ 'Proceeded' if detail.result == 'Y' else 'Pending' }}</td>
+                        <td>{{ 'Completed' if detail.status == 0 else 'Pending' }}</td>
+                        <td>{{ detail.duration_formatted }}</td>
+
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+    </main>
+    <footer>
+        <!-- Footer content -->
+    </footer>
+
+    <!-- Modal for Trend Graph -->
+    <div id="trendModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Trend Analysis for {{ file_name }}</h2>
+            <canvas id="trendChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // Data for file details
+        const fileDetailData = {{ top_files | tojson | safe }};
+        
+        // Extract data for file detail chart
+        const fileDetailLabels = fileDetailData.map((detail, index) => `File ${index + 1}`);
+        const fileDurations = fileDetailData.map(detail => {
+            const startDate = new Date(detail.start_date);
+            const endDate = new Date(detail.end_date);
+            return (endDate - startDate) / (1000 * 60 * 60); // Duration in hours
+        });
+
+        // File detail chart configuration
+        const fileDetailCtx = document.getElementById('fileDetailChart').getContext('2d');
+        const fileDetailChart = new Chart(fileDetailCtx, {
+            type: 'bar',
+            data: {
+                labels: fileDetailLabels,
+                datasets: [{
+                    label: 'Duration (Hours)',
+                    data: fileDurations,
+                    backgroundColor: '#36A2EB',
+                }]
+            }
+        });
+
+        // Trend button and modal handling
+        const viewTrendBtn = document.getElementById('viewTrendBtn');
+        const trendModal = document.getElementById('trendModal');
+        const closeModal = document.getElementsByClassName('close')[0];
+        const trendCtx = document.getElementById('trendChart').getContext('2d');
+
+        viewTrendBtn.onclick = function() {
+            trendModal.style.display = 'block';
+
+            // Call the backend to fetch all data for the trend graph
+            fetch(`/fetch_trend_data/${encodeURIComponent('{{ file_name }}')}`)
+                .then(response => response.json())
+                .then(trendData => {
+                    const trendLabels = trendData.map(detail => new Date(detail.start_date).toLocaleString());
+                    const trendDurations = trendData.map(detail => {
+                        const startDate = new Date(detail.start_date);
+                        const endDate = new Date(detail.end_date);
+                        return (endDate - startDate) ; // Duration in hours
+                    });
+
+                    const trendChart = new Chart(trendCtx, {
+                        type: 'line',
+                        data: {
+                            labels: trendLabels,
+                            datasets: [{
+                                label: 'Duration (Days)',
+                                data: trendDurations,
+                                borderColor: '#36A2EB',
+                                
+                                fill: false,
+                            }]
+                        }
+                    });
+                });
+        };
+
+        closeModal.onclick = function() {
+            trendModal.style.display = 'none';
+        };
+
+        window.onclick = function(event) {
+            if (event.target === trendModal) {
+                trendModal.style.display = 'none';
+            }
+        };
+
+        function logoutAll() {
+            localStorage.setItem('logout-event', 'login' + Math.random());
+            window.location.href = "{{ url_for('login') }}";
+        }
+
+        window.addEventListener('storage', function(event) {
+            if (event.key === 'logout-event') {
+                window.location.href = "{{ url_for('login') }}";
+            }
+        }, false);
+    </script>
+</body>
+</html>
