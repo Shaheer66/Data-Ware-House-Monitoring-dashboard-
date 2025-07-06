@@ -1,0 +1,255 @@
+/* General Styles */
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+/* Header Styles */
+header {
+    background-color: #8dc63f; /* Updated to new green */
+    color: #ffffff; /* Updated to new white */
+    padding: 20px;
+    text-align: center;
+    font-size: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+header #update_chart{
+    background-color: #e40076; 
+    color: #ffffff; /* Updated to new white */
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    border-radius: 5px;
+    margin: 5px;
+    cursor: pointer;
+    border: none; 
+    transition: background-color 0.3s ease, transform 0.3s ease;
+    
+}
+
+header #update_chart:hover {
+    background-color: #f7007f; /* Darker shade of green for hover */
+    transform: translateY(-3px); /* Lift-up effect on hover */
+}
+
+header h1 {
+    margin: 0;
+}
+
+.logout-btn {
+    background-color: #e40076; /* Updated to new pink */
+    color: #ffffff; /* Updated to new white */
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease, transform 0.3s ease; /* Added transform transition */
+    border: none; 
+    
+}
+
+.logout-btn:hover {
+    background-color: #c80066; 
+    transform: translateY(-3px); 
+}
+
+/* Main Content Styles */
+main {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+main .file-summary #view_trend{
+    background-color: #e40076; 
+    color: #ffffff;  
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    border-radius: 5px;
+    margin: 5px;
+    cursor: pointer;
+    border: none; 
+    transition: background-color 0.3s ease, transform 0.3s ease;
+
+}
+
+main .file-summary #view_trend:hover{
+    background-color: #c80066; 
+    transform: translateY(-3px);
+
+}
+
+/* File Details Section */
+.file-summary {
+    background-color: #ffffff; 
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.file-summary ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.file-summary li {
+    margin-bottom: 0.5rem;
+}
+
+/* File Details Section */
+.file-details {
+    background-color: #ffffff;   
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    padding: 1rem;
+}
+
+.file-details .chart {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.file-details table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.file-details thead th {
+    background-color: #8dc63f;  
+    color: #ffffff;  
+    padding: 1rem;
+    text-align: left;
+    font-weight: bold;
+}
+
+.file-details tbody td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #ddd;
+}
+
+.file-details tbody tr:nth-child(odd) {
+    background-color: #f9f9f9;
+}
+
+.file-details tbody tr:hover {
+    background-color: #f1f1f1;
+}
+
+.file-details tbody a {
+    color: #e40076;  
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.file-details tbody a:hover {
+    text-decoration: underline;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    background-color: #ffffff;  
+    margin: 15% auto;
+    padding: 20px;
+    border-radius: 8px;
+    width: 80%;
+    max-width: 600px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.modal-content h2 {
+    margin-top: 0;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: #333;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Pagination Button Styles */
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.pagination-btn {
+    background-color: #e40076; 
+    color: #ffffff; 
+    padding: 10px 20px;
+    margin: 0 5px;
+    border: none; 
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease; /* Added transform transition */
+}
+
+.pagination-btn:hover {
+    background-color: #c80066;  
+    transform: translateY(-3px); /* Lift-up effect on hover */
+}
+
+#pageInfo {
+    margin: 0 10px;
+    font-size: 16px;
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 10px;
+    background-color: #8dc63f; 
+    color: #ffffff; 
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .logout-btn {
+        margin-top: 1rem;
+    }
+
+    .file-details {
+        padding: 1rem;
+    }
+}
